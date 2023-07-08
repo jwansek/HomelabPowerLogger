@@ -23,6 +23,7 @@ class PowerDatabase:
         return self
 
     def __exit__(self, type, value, traceback):
+        self.__connection.commit()
         self.__connection.close()
 
     def __get_connection(self):
@@ -67,7 +68,17 @@ class PowerDatabase:
             CREATE TABLE watt_readings (
                 host VARCHAR(25) NOT NULL,
                 `datetime` DATETIME DEFAULT NOW(),
-                reading DECIMAL(3,1) NOT NULL,
+                reading FLOAT(24) NOT NULL,
+                FOREIGN KEY (host) REFERENCES tasmota_devices (host),
+                PRIMARY KEY (host, `datetime`)
+            );
+            """)
+
+            cursor.execute("""
+            CREATE TABLE kwh_readings (
+                host VARCHAR(25) NOT NULL,
+                `datetime` DATETIME DEFAULT NOW(),
+                reading FLOAT(24) NOT NULL,
                 FOREIGN KEY (host) REFERENCES tasmota_devices (host),
                 PRIMARY KEY (host, `datetime`)
             );
@@ -82,7 +93,13 @@ class PowerDatabase:
             return cursor.fetchall()
 
     def append_watt_readings(self, host, reading):
-        cursor.execute("INSERT INTO watt_readings (host, reading) VALUES (%s, %s);", (host, reading))
+        with self.__connection.cursor() as cursor:
+            cursor.execute("DELETE FROM watt_readings WHERE `datetime` < DATE_SUB(NOW(), INTERVAL 1 DAY);")
+            cursor.execute("INSERT INTO watt_readings (host, reading) VALUES (%s, %s);", (host, reading))
+
+    def append_kwh_readings(self, host, reading):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("INSERT INTO kwh_readings (host, reading) VALUES (%s, %s);", (host, reading))
 
 if __name__ == "__main__":
     if not os.path.exists(".docker"):

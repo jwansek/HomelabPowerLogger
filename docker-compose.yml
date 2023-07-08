@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+    cron:
+        build:
+            context: .
+            dockerfile: cron_Dockerfile
+        image: jwansek/power
+        env_file:
+            - ./db.env
+        external_links:
+            - mariadb:db
+        networks:
+            - db-network
+
+networks:
+    db-network:
+            external:
+                name: mariadb

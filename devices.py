@@ -1,31 +1,57 @@
 import tasmotadevicecontroller
 import database
 import asyncio
+import datetime
 import json
+import sys
 import os
 
-COUNTER_NAMES = ["Total", "Today"]
-GAUGE_NAMES = ["Power", "ApparentPower", "ReactivePower", "Factor", "Voltage", "Current"]
-SUMMARY_NAMES = ["TotalStartTime", "Yesterday"]
-BOOLEAN_ENUM_NAMES = ["Power"]
+if not os.path.exists(os.path.join("/app", ".docker")):
+    import dotenv
+    dotenv.load_dotenv(dotenv_path = "db.env")
+    HOST = "srv.home"
+else:
+    HOST = "db"
 
 async def get_energy_for(host, username = None, password = None):
     device = await tasmotadevicecontroller.TasmotaDevice().connect(host, username, password)
     energy = await device.sendRawRequest("Status 8")
     power = await device.getPower()
     # friendlyname = await device.getFriendlyName()
-    energy["StatusSNS"]["ENERGY"]["Power"] = power
     return energy["StatusSNS"]["ENERGY"]
     # return {"%s_%s" % (status["FriendlyName"], k): v for k, v in status.items()}
 
-async def log_energies_for(db: database.PowerDatabase, host, username, password):
-    pass
+async def poll_watt_for(db: database.PowerDatabase, host, username, password):
+    power = await get_energy_for(host, username, password)
+    power = float(power['Power'])
+    db.append_watt_readings(host, power)
+    print("'%s' is using %.1fW at %s" % (host, power, datetime.datetime.now()))
 
-if __name__  == "__main__":
+async def poll_yesterday_kwh_for(db: database.PowerDatabase, host, username, password):
+    power = await get_energy_for(host, username, password)
+    power = float(power['Yesterday'])
+    db.append_kwh_readings(host, power)
+    print("'%s' used %.1fkWh yesterday" % (host, power))
+
+
+def poll_watt_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    try:
-        print(asyncio.run(get_energy_for("switch.plug", "admin", "securebackdoor")))
-        # asyncio.run(get_all_plugs("4u.plug:admin:securebackdoor,switch.plug:admin:securebackdoor,router.plug:admin:securebackdoor,nas.plug:admin:securebackdoor"))
-    except KeyboardInterrupt:
-        pass
+    with database.PowerDatabase(host = HOST) as db:
+        for host, username, password in db.get_tasmota_devices():
+            asyncio.run(poll_watt_for(db, host, username, password))
+
+def poll_kwh_all():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    with database.PowerDatabase(host = HOST) as db:
+        for host, username, password in db.get_tasmota_devices():
+            asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
+
+
+if __name__  == "__main__":
+    if sys.argv[1] == "daily":
+        poll_kwh_all()
+    else:
+        poll_watt_all()
+
