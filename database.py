@@ -20,6 +20,16 @@ class PowerDatabase:
             print(e)
             if e.args[0] == 1049:
                 self.__connection = self.__build_db()
+
+        with self.__connection.cursor() as cursor:
+            if "TASMOTA_DEVICES" in os.environ.keys():
+                for host, username, password in self.get_tasmota_devices():
+                    cursor.execute("""
+                    INSERT INTO tasmota_devices (host, username, password) 
+                    VALUES (%s, %s, %s) 
+                    ON DUPLICATE KEY UPDATE username = %s, password = %s;
+                    """, (host, username, password, username, password))
+
         return self
 
     def __exit__(self, type, value, traceback):
@@ -58,12 +68,6 @@ class PowerDatabase:
             );
             """)
 
-            if "TASMOTA_DEVICES" in os.environ.keys():
-                devices = os.environ["TASMOTA_DEVICES"].split(",")
-                for device in devices:
-                    host, username, password = device.split(":")
-                    cursor.execute("INSERT INTO tasmota_devices VALUES (%s, %s, %s);", (host, username, password))
-
             cursor.execute("""
             CREATE TABLE watt_readings (
                 host VARCHAR(25) NOT NULL,
@@ -88,9 +92,10 @@ class PowerDatabase:
             return self.__connection
 
     def get_tasmota_devices(self):
-        with self.__connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM tasmota_devices;")
-            return cursor.fetchall()
+        o = []
+        for d in os.environ["TASMOTA_DEVICES"].split(","):
+            o.append(d.split(":"))
+        return o
 
     def append_watt_readings(self, host, reading):
         with self.__connection.cursor() as cursor:
@@ -105,7 +110,7 @@ if __name__ == "__main__":
     if not os.path.exists(".docker"):
         import dotenv
         dotenv.load_dotenv(dotenv_path = "db.env")
-        host = "srv.home"
+        host = "srv.athome"
     else:
         host = "db"
 
