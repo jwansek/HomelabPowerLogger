@@ -4,7 +4,7 @@ import os
 
 @dataclass
 class PowerDatabase:
-    host: str = "db"
+    host: str = None
     user: str = "root"
     passwd: str = None
     db: str = "power"
@@ -13,6 +13,9 @@ class PowerDatabase:
     def __enter__(self):
         if self.passwd is None:
             self.passwd = os.environ["MYSQL_ROOT_PASSWORD"]
+
+        if self.host is None:
+            self.host = os.environ["MYSQL_HOST"]
             
         try:
             self.__connection = self.__get_connection()
@@ -112,7 +115,7 @@ if __name__ == "__main__":
         dotenv.load_dotenv(dotenv_path = "db.env")
         host = "srv.athome"
     else:
-        host = "db"
+        host = None
 
     with PowerDatabase(host = host) as db:
         print(db.get_tasmota_devices())

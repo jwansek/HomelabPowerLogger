@@ -11,7 +11,7 @@ if not os.path.exists(os.path.join("/app", ".docker")):
     dotenv.load_dotenv(dotenv_path = "db.env")
     HOST = "srv.athome"
 else:
-    HOST = "db"
+    HOST = None
 
 async def get_energy_for(host, username = None, password = None):
     device = await tasmotadevicecontroller.TasmotaDevice().connect(host, username, password)
@@ -39,15 +39,22 @@ def poll_watt_all():
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
         for host, username, password in db.get_tasmota_devices():
-            asyncio.run(poll_watt_for(db, host, username, password))
+            try:
+                asyncio.run(poll_watt_for(db, host, username, password))
+            except:
+                print("Retrying %s..." % host)
+                asyncio.run(poll_watt_for(db, host, username, password))
 
 def poll_kwh_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
         for host, username, password in db.get_tasmota_devices():
-            asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
-
+            try:
+                asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
+            except:
+                print("Retrying %s..." % host)
+                asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
 
 if __name__  == "__main__":
     if sys.argv[1] == "daily":
