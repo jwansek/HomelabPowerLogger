@@ -109,13 +109,37 @@ class PowerDatabase:
         with self.__connection.cursor() as cursor:
             cursor.execute("INSERT INTO kwh_readings (host, reading) VALUES (%s, %s);", (host, reading))
 
+    def get_last_plug_readings(self):
+        plugs = [i[0] for i in self.get_tasmota_devices()]
+        with self.__connection.cursor() as cursor:
+            cursor.execute("SELECT host, MAX(datetime) FROM watt_readings WHERE host IN %s GROUP BY host;", (plugs, ))
+            plugtimes = cursor.fetchall()
+
+            readings = []
+            for host, datetime in plugtimes:
+                cursor.execute("SELECT host, datetime, reading FROM watt_readings WHERE host = %s AND datetime = %s;", (host, datetime))
+                readings.append(cursor.fetchone())
+        return readings
+
+    def get_watt_chart(self):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT host FROM watt_readings;")
+            hosts = [i[0] for i in cursor.fetchall()]
+            
+            out = {}
+            for host in hosts:
+                cursor.execute("SELECT datetime, reading FROM watt_readings WHERE host = %s ORDER BY datetime;", (host, ))
+                out[host] = cursor.fetchall()
+
+        return out
+
 if __name__ == "__main__":
     if not os.path.exists(".docker"):
         import dotenv
-        dotenv.load_dotenv(dotenv_path = "db.env")
+        dotenv.load_dotenv(dotenv_path = "power.env")
         host = "srv.athome"
     else:
         host = None
 
     with PowerDatabase(host = host) as db:
-        print(db.get_tasmota_devices())
+        print(db.get_watt_chart())

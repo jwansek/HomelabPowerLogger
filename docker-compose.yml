@@ -7,4 +7,4 @@ services:
             dockerfile: cron_Dockerfile
         image: jwansek/power
         env_file:
-            - ./db.env
+            - ./power.env

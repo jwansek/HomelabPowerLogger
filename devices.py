@@ -8,7 +8,7 @@ import os
 
 if not os.path.exists(os.path.join("/app", ".docker")):
     import dotenv
-    dotenv.load_dotenv(dotenv_path = "db.env")
+    dotenv.load_dotenv(dotenv_path = "power.env")
     HOST = "srv.athome"
 else:
     HOST = None

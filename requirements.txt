@@ -2,4 +2,5 @@ tasmotadevicecontroller==0.0.8
 aiohttp==3.8.3
 pymysql
 python-dotenv
-
+pyserial
+flask
