@@ -39,26 +39,37 @@ def poll_watt_all():
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
         for host, username, password in db.get_tasmota_devices():
-            try:
-                asyncio.run(poll_watt_for(db, host, username, password))
-            except:
-                print("Retrying %s..." % host)
-                asyncio.run(poll_watt_for(db, host, username, password))
+            while True:
+                try:
+                    asyncio.run(poll_watt_for(db, host, username, password))
+                except:
+                    print("Retrying %s..." % host)
+                    continue
+                break
+                
 
 def poll_kwh_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
         for host, username, password in db.get_tasmota_devices():
-            try:
-                asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
-            except:
-                print("Retrying %s..." % host)
-                asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
+            while True:
+                try:
+                    asyncio.run(poll_yesterday_kwh_for(db, host, username, password))
+                except ConnectionError:
+                    print("Retrying %s..." % host)
+                    continue
+                break
 
 if __name__  == "__main__":
-    if sys.argv[1] == "daily":
-        poll_kwh_all()
-    else:
-        poll_watt_all()
+    while True:
+        try:
+            if sys.argv[1] == "daily":
+                poll_kwh_all()
+            else:
+                poll_watt_all()
+        except ConnectionError as e:
+            print("Couldn't connect: ", e, " retrying...")
+            continue
+        break
 

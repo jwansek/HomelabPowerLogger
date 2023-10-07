@@ -23,6 +23,8 @@ class PowerDatabase:
             print(e)
             if e.args[0] == 1049:
                 self.__connection = self.__build_db()
+            elif e.args[0] == 2003:
+                raise ConnectionError(e.args[1])
 
         with self.__connection.cursor() as cursor:
             if "TASMOTA_DEVICES" in os.environ.keys():
