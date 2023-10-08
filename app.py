@@ -42,5 +42,10 @@ def api_get_watt_chart():
     with database.PowerDatabase(host = devices.HOST) as db:
         return flask.jsonify(db.get_watt_chart())
 
+@app.route("/api/longterm_chart")
+def api_get_kwh_chart():
+    with database.PowerDatabase(host = devices.HOST) as db:
+        return flask.jsonify(db.get_kwh_chart())
+
 if __name__ == "__main__":
     app.run(host = "0.0.0.0", port = int(os.environ["APP_PORT"]), debug = True)

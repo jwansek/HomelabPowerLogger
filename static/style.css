@@ -1,0 +1,96 @@
+body {
+    font-family: Helvetica, sans-serif;
+}
+  
+header {
+    font-size: large;
+    padding-left: 1%;
+}
+
+a {
+    color: black;
+    font-weight: bold;
+    padding-top: 1px;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+header nav {
+    flex-grow: 1;
+    display: inline;
+}
+
+#externallinks {
+    background-color: black;
+    text-align: left;
+}
+
+#externallinks nav ul li a {
+    color: #f1f3f3;
+    font-size: smaller;
+}
+
+header div {
+    padding-left: 20px;
+    /* padding-bottom: 10px; */
+}
+
+nav ul {
+    margin: 0;
+    padding: 0;
+}
+
+nav li {
+    display: inline-block;
+    list-style-type: none;
+}
+
+nav a {
+    text-decoration: none;
+    display: block;
+    padding: 5px 6px 5px 6px;
+    color: black;
+}
+
+footer {
+    padding-top: 100px;
+    font-size: x-small;
+}
+
+#main_content {
+    padding-left: 2.5%;
+    padding-right: 2.5;
+}
+
+  
+#multicharts ul li {
+    list-style-type: none;
+    width: 45%;
+    display: inline-flex;
+    /* background-color: pink; */
+    min-height: 350px;
+    margin-bottom: 7px;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: space-between;
+    /* border-color: black;
+    border-width: 2px;
+    border-radius: 1;
+    border-style: ridge; */
+}
+  
+.chart_container {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+@media screen and (max-width: 1200px) {
+    #multicharts ul li {
+      width: 100%;
+      min-height: 500px;
+      height: 100%;
+    }
+}

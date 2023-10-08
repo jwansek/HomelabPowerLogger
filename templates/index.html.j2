@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>edaweb power monitor</title>
+	<!-- JQuery and JQurty UI current version -->
+    <script src='https://code.jquery.com/jquery-3.6.0.js'></script>
+	<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+
+	<!-- Highcharts libraries -->
+	<script type="text/javascript" src="https://code.highcharts.com/highcharts.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/highcharts-more.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/modules/export-data.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/modules/accessibility.js"></script>	
+	
+	<script type="text/javascript" src="https://code.highcharts.com/maps/modules/map.js"></script>
+	<script type="text/javascript" src="https://code.highcharts.com/mapdata/custom/world-robinson.js"></script>
+
+	<!-- local Javascript files -->
+	<script type="text/javascript" src="{{ url_for('static', filename='scripts.js') }}"></script>
+	<!-- remote and local CSS stylesheet -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header>
+        <h1>edaweb power monitoring</h1>
+        <div id="externallinks">
+            <nav>
+                <ul>
+                    <li><a href="http://eda.gay">eda.gay</a></li>
+                    <li><a href="http://wiki.eda.gay">wiki.eda.gay</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div id="main_content">
+        <div id="multicharts">
+            <ul id="charts_ul">
+                <li>
+                    <figure class="chart_container">
+                        <div class="minichart" id="longterm_chart"></div>
+                    </figure>
+                </li>
+                <li>
+                    <figure class="chart_container">
+                        <div class="minichart" id="hourly_chart"></div>
+                    </figure>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p><a href="https://github.com/jwansek/power.eda.gay">Source code released under GPLv3</a></p>
+        <p><a href="https://www.fsf.org/campaigns/freejs">Read the Free Software Foundations statements about JavaScript</a></p>
+    </footer>
+</body>

@@ -135,6 +135,21 @@ class PowerDatabase:
 
         return out
 
+    def get_kwh_chart(self):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT host FROM kwh_readings;")
+            hosts = [i[0] for i in cursor.fetchall()]
+            
+            out = {}
+            for host in hosts:
+                cursor.execute("SELECT datetime, reading FROM kwh_readings WHERE host = %s ORDER BY datetime;", (host, ))
+                out[host] = cursor.fetchall()
+
+        return out
+
+def to_series(timeseriesforeach):
+    print(timeseriesforeach)
+
 if __name__ == "__main__":
     if not os.path.exists(".docker"):
         import dotenv
@@ -144,4 +159,4 @@ if __name__ == "__main__":
         host = None
 
     with PowerDatabase(host = host) as db:
-        print(db.get_watt_chart())
+        print(to_series(db.get_kwh_chart()))
