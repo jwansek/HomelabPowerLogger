@@ -3,4 +3,4 @@ aiohttp==3.8.3
 pymysql
 python-dotenv
 pyserial
-flask
+

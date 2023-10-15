@@ -38,7 +38,9 @@ def poll_watt_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
-        for host, username, password in db.get_tasmota_devices():
+        devices = db.get_tasmota_devices()
+        print("There are devices: ", [i[0] for i in devices])
+        for host, username, password, description in devices:
             while True:
                 try:
                     asyncio.run(poll_watt_for(db, host, username, password))
@@ -52,7 +54,7 @@ def poll_kwh_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     with database.PowerDatabase(host = HOST) as db:
-        for host, username, password in db.get_tasmota_devices():
+        for host, username, password, description in db.get_tasmota_devices():
             while True:
                 try:
                     asyncio.run(poll_yesterday_kwh_for(db, host, username, password))

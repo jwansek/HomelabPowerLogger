@@ -8,3 +8,4 @@ services:
         image: jwansek/power
         env_file:
             - ./power.env
+        restart: always

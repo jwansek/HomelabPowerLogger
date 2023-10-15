@@ -52,7 +52,36 @@
                 </li>
             </ul>
         </div>
+
+        <table id="power_table">
+            <tr id="header_row">
+                <td>Plug local hostname</td>
+                <td>Plug description</td>
+                <td>Current power usage (W)</td>
+                <td>Power usage yesterday (kWh)</td>
+            </tr>
+            {% for host, description_md in tasmota_devices %}
+                <tr id="tr_{{ host }}">
+                    <td><a href="http://{{ host }}" target="_blank">{{ host }}</a></td>
+                    <td>{{ description_md|safe }}</td>
+                    <td id="{{ host }}_watts_now"></td>
+                    <td id="{{ host }}_watts_yesterday"></td>
+                </tr>
+            {% endfor %}
+            <tr id="sum_row">
+                <td></td>
+                <td></td>
+                <td id="sum_watts_now"></td>
+                <td id="sum_watts_yesterday"></td>
+            </tr>
+        </table>
     </div>
+
+    <ul id="last_updated_ul">
+        <li id="watts_last_updated">Current power usage never updated</li>
+        <li id="kwh_last_updated">Yesterday's power usage never updated</li>
+        <li id="switch_last_updated">Switch power usage never updated</li>
+    </ul>
 
     <footer>
         <p><a href="https://github.com/jwansek/power.eda.gay">Source code released under GPLv3</a></p>

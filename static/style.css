@@ -70,7 +70,7 @@ footer {
     list-style-type: none;
     width: 45%;
     display: inline-flex;
-    /* background-color: pink; */
+    background-color: pink;
     min-height: 350px;
     margin-bottom: 7px;
     overflow: hidden;
@@ -85,6 +85,31 @@ footer {
 .chart_container {
     display: flex;
     flex-direction: row-reverse;
+}
+
+#power_table {
+    width: 90%;
+}
+
+#header_row {
+    background-color: black;
+}
+
+#header_row td {
+    color: #f1f3f3;
+    font-weight: bold;
+}
+
+#power_table tr {
+    margin-bottom: 3px;
+}
+
+#last_updated_ul {
+    font-size: small;
+}
+
+#sum_row {
+    background-color: gainsboro;
 }
 
 @media screen and (max-width: 1200px) {

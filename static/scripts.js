@@ -1,73 +1,37 @@
 $(document).ready(function() {
-    Highcharts.chart('longterm_chart', {
-        chart: {
-            type: 'area'
-        },
+    fetch("/api/mikrotik_plug").then((resp) => {
+        resp.json().then((body) => {
+            const MIKROTIK_PARENT = body["parent"];
+        });
+    });
 
-        title: {
-            text: 'Estimated Worldwide Population Growth by Region'
-        },
+    console.log(MIKROTIK_PARENT);
 
-        subtitle: {
-            text: 'Source: Wikipedia.org'
-        },
-
-        xAxis: {
-            categories: ['1750', '1800', '1850', '1900', '1950', '1999', '2050'],
-            tickmarkPlacement: 'on',
-            title: {
-                enabled: false
-            }
-
-        },
-
-        yAxis: {
-            title: {
-                text: 'Billions'
-            },
-
-            labels: {
-                    formatter: function() {
-                    return this.value / 1000;
-
-                }
-
-            }
-
-        },
-
-        tooltip: {
-            split: true,
-            valueSuffix: ' millions'
-        },
-
-        plotOptions: {
-            area: {
-                stacking: 'normal',
-                lineColor: '#666666',
-                lineWidth: 1,
-                marker: {
-                    lineWidth: 1,
-                    lineColor: '#666666'
-                }
-            
-        },
-
-        series: [{
-            name: 'Asia',
-            data: [502, 635, 809, 947, 1402, 3634, 5268]
-        }, {
-            name: 'Africa',
-            data: [106, 107, 111, 133, 221, 767, 1766]
-        }, {
-            name: 'Europe',
-            data: [163, 203, 276, 408, 547, 729, 628]
-        }, {
-            name: 'America',
-            data: [18, 31, 54, 156, 339, 818, 1201]
-        }, {
-            name: 'Oceania',
-            data: [2, 2, 2, 6, 13, 30, 46]
-        }]
-    }});
+    get_main_table();
 })
+
+function get_main_table() {
+    fetch("/api/plugs").then((resp) => {
+        resp.json().then((body) => {
+            let watts_sum = 0;
+            let kwh_sum = 0;
+            Object.keys(body).forEach((host, i) => {
+                watts = body[host]["watts"];
+                kwh = body[host]["kWh"];
+                document.getElementById(host + "_watts_now").innerHTML = watts[1];
+                document.getElementById(host + "_watts_yesterday").innerHTML = kwh[1];
+                watts_sum += watts[1];
+                kwh_sum += kwh[1];
+                
+                document.getElementById("watts_last_updated").innerHTML = "Current power usage last updated at " + watts[0];
+                document.getElementById("kwh_last_updated").innerHTML = "Yesterday's power usage last updated at " + kwh[0];
+
+                console.log(host, watts[0], watts[1], kwh[1])
+            });
+            document.getElementById("sum_watts_now").innerHTML = watts_sum;
+            document.getElementById("sum_watts_yesterday").innerHTML = kwh_sum;
+        });
+    });
+
+    setTimeout(get_main_table, 30000);
+}

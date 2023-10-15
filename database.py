@@ -28,7 +28,7 @@ class PowerDatabase:
 
         with self.__connection.cursor() as cursor:
             if "TASMOTA_DEVICES" in os.environ.keys():
-                for host, username, password in self.get_tasmota_devices():
+                for host, username, password, description in self.get_tasmota_devices():
                     cursor.execute("""
                     INSERT INTO tasmota_devices (host, username, password) 
                     VALUES (%s, %s, %s) 
@@ -98,8 +98,9 @@ class PowerDatabase:
 
     def get_tasmota_devices(self):
         o = []
-        for d in os.environ["TASMOTA_DEVICES"].split(","):
-            o.append(d.split(":"))
+        for d in os.environ["TASMOTA_DEVICES"].split(";"):
+            line = d.split(",")
+            o.append(line)
         return o
 
     def append_watt_readings(self, host, reading):
@@ -115,12 +116,20 @@ class PowerDatabase:
         plugs = [i[0] for i in self.get_tasmota_devices()]
         with self.__connection.cursor() as cursor:
             cursor.execute("SELECT host, MAX(datetime) FROM watt_readings WHERE host IN %s GROUP BY host;", (plugs, ))
-            plugtimes = cursor.fetchall()
+            wattplugtimes = cursor.fetchall()
 
-            readings = []
-            for host, datetime in plugtimes:
+            cursor.execute("SELECT host, MAX(datetime) FROM kwh_readings WHERE host IN %s GROUP BY host;", (plugs, ))
+            kwhplugtimes = {i[0]: i[1] for i in cursor.fetchall()}
+
+            readings = {}
+            for host, datetime in wattplugtimes:
                 cursor.execute("SELECT host, datetime, reading FROM watt_readings WHERE host = %s AND datetime = %s;", (host, datetime))
-                readings.append(cursor.fetchone())
+                o1 = cursor.fetchone()
+                readings[host] = {"watts": (o1[1], o1[2])}
+
+                cursor.execute("SELECT host, datetime, reading FROM kwh_readings WHERE host = %s AND datetime = %s;", (host, kwhplugtimes[host]))
+                o2 = cursor.fetchone()
+                readings[host]["kWh"] = (o2[1], o2[2])
         return readings
 
     def get_watt_chart(self):
@@ -159,4 +168,4 @@ if __name__ == "__main__":
         host = None
 
     with PowerDatabase(host = host) as db:
-        print(to_series(db.get_kwh_chart()))
+        print(db.get_last_plug_readings())

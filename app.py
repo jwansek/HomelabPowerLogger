@@ -1,4 +1,5 @@
 import database
+import mistune
 import mikrotik
 import devices
 import flask
@@ -6,18 +7,22 @@ import os
 
 app = flask.Flask(__name__)
 switch = mikrotik.MikroTikSerialDevice()
+markdown_renderer = mistune.create_markdown(
+    renderer = mistune.HTMLRenderer(),
+    plugins = ["strikethrough", "table", "url"]
+)
 
 @app.route("/")
 def route_index():
     with database.PowerDatabase(host = devices.HOST) as db:
         return flask.render_template(
             "index.html.j2",
-            tasmota_devices = db.get_tasmota_devices()
+            tasmota_devices = [[i[0], markdown_renderer(i[-1])] for i in db.get_tasmota_devices()]
         )
 
 @app.route("/api/mikrotik_devices")
 def api_get_mikrotik_devices():
-    return flask.jsonify(switch.interfaces)
+    return flask.jsonify({i[0]: markdown_renderer(i[1]) for i in switch.interfaces.items()})
 
 @app.route("/api/mikrotik_interface/<interface>")
 def api_poll_mikrotik_interface(interface):
@@ -31,6 +36,10 @@ def api_poll_mikrotik_interface(interface):
         )
     except (IndexError, KeyError):
         return flask.abort(400)
+
+@app.route("/api/mikrotik_plug")
+def api_get_mikrotik_plug():
+    return flask.jsonify({"parent": os.environ["MIKROTIK_TASMOTA"]})
     
 @app.route("/api/plugs")
 def api_poll_plugs():

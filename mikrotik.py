@@ -26,13 +26,15 @@ class MikroTikSerialDevice:
     def __post_init__(self):
         self.interfaces = {}
         self.last_return = {}
-        for i in os.environ["MIKROTIK_INTERFACES"].split(","):
-            self.interfaces.__setitem__(*i.split(":"))
+        for i in os.environ["MIKROTIK_INTERFACES"].split(";"):
+            self.interfaces.__setitem__(*i.split(","))
         self.is_being_polled = threading.Event()
         self.poe_cache = {interface: {} for interface in self.interfaces}
 
     def get_poe_info(self, interface):
-        print(self.poe_cache)
+        # fetch from cache so that multiple processes don't try to access serial at the same time
+        # this means that the same MikroTikSerialDevice object must be used for multiple threads
+        # if another thread is accessing the critical region, return from cache
         if self.is_being_polled.is_set():
             fetched_cache = self.poe_cache[interface]
             fetched_cache["cached"] = True
@@ -70,7 +72,13 @@ class MikroTikSerialDevice:
             if line.startswith("poe"):
                 d.__setitem__(*line.split(": "))
 
-        self.last_return = d
+        # also fetch from cache if it returned nothing
+        if d == {}:
+            fetched_cache = self.poe_cache[interface]
+            fetched_cache["cached"] = True
+            return fetched_cache 
+
+        self.last_return = d        
         self.poe_cache[interface] = d
         d["cached"] = was_cached
         return d
@@ -84,6 +92,7 @@ if __name__ == "__main__":
         dotenv.load_dotenv(dotenv_path = "power.env")
 
     mikrotik = MikroTikSerialDevice()
-    for interface in mikrotik.interfaces:
-        print(interface, mikrotik.get_poe_info(interface))
+    for i in range(10):
+        for interface in mikrotik.interfaces:
+            print(interface, mikrotik.get_poe_info(interface))
 

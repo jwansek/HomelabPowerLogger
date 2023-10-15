@@ -8,9 +8,9 @@ RUN mkdir app
 COPY . /app
 WORKDIR /app
 RUN touch .docker
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r cron_requirements.txt
 
 RUN echo "*/1 * * * * root python3 /app/devices.py nothourly > /proc/1/fd/1 2>/proc/1/fd/2" > /etc/crontab
-RUN echo "@daily  root python3 /app/devices.py daily > /proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
+RUN echo "@daily root python3 /app/devices.py daily > /proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 ENTRYPOINT ["bash"]
 CMD ["entrypoint.sh"]
