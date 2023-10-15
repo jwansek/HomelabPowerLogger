@@ -2,10 +2,24 @@ $(document).ready(function() {
     fetch("/api/mikrotik_plug").then((resp) => {
         resp.json().then((body) => {
             const MIKROTIK_PARENT = body["parent"];
+
+            const parent_elem = document.getElementById("tr_" + MIKROTIK_PARENT);
+
+            fetch("/api/mikrotik_devices").then((resp) => {
+                resp.json().then((body) => {
+                    Object.keys(body).forEach((interface, i) => {
+                        let tr_elem = document.createElement("tr");
+                        tr_elem.classList.add("mikrotik_tr")
+                        tr_elem.id = "mikrotik_tr_" + interface;
+                        // console.log(interface, body[interface]);
+                        parent_elem.parentNode.insertBefore(tr_elem, parent_elem.nextSibling);
+                    })
+                });
+            });
+
+            // parent_elem.parentNode.insertBefore(document.createElement("tr"), parent_elem.nextSibling);
         });
     });
-
-    console.log(MIKROTIK_PARENT);
 
     get_main_table();
 })
