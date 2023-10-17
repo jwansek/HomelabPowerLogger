@@ -9,3 +9,16 @@ services:
         env_file:
             - ./power.env
         restart: always
+        network_mode: host
+
+    db:
+        image: mariadb
+        restart: always
+        volumes:
+            - logger_data:/var/lib/mysql
+        env_file:
+            - ./db.env
+        network_mode: host
+
+volumes:
+    logger_data:
