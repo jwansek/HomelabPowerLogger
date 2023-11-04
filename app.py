@@ -3,10 +3,11 @@ import mistune
 import mikrotik
 import devices
 import flask
+import time
 import os
 
 app = flask.Flask(__name__)
-switch = mikrotik.MikroTikSerialDevice()
+switch = mikrotik.MikroTikSSHDevice()
 markdown_renderer = mistune.create_markdown(
     renderer = mistune.HTMLRenderer(),
     plugins = ["strikethrough", "table", "url"]
@@ -26,12 +27,13 @@ def api_get_mikrotik_devices():
 
 @app.route("/api/mikrotik_interface/<interface>")
 def api_poll_mikrotik_interface(interface):
+    # time.sleep(0.25)
     try:
         return flask.jsonify(
             {
                 "interface": interface,
                 "description": switch.interfaces[interface],
-                "poe_status": switch.get_poe_info(interface)
+                "poe_status": switch.get_interface_poe(interface)
             }
         )
     except (IndexError, KeyError):

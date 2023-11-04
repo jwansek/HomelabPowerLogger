@@ -1,2 +1,4 @@
 power.env
 db.env
+*.pub
+*.pem

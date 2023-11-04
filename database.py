@@ -163,9 +163,6 @@ if __name__ == "__main__":
     if not os.path.exists(".docker"):
         import dotenv
         dotenv.load_dotenv(dotenv_path = "power.env")
-        host = "srv.athome"
-    else:
-        host = None
 
-    with PowerDatabase(host = host) as db:
+    with PowerDatabase() as db:
         print(db.get_last_plug_readings())

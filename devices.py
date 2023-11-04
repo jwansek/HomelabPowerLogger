@@ -9,9 +9,7 @@ import os
 if not os.path.exists(os.path.join("/app", ".docker")):
     import dotenv
     dotenv.load_dotenv(dotenv_path = "power.env")
-    HOST = "srv.athome"
-else:
-    HOST = None
+HOST = None
 
 async def get_energy_for(host, username = None, password = None):
     device = await tasmotadevicecontroller.TasmotaDevice().connect(host, username, password)
@@ -53,7 +51,7 @@ def poll_watt_all():
 def poll_kwh_all():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    with database.PowerDatabase(host = HOST) as db:
+    with database.PowerDatabase() as db:
         for host, username, password, description in db.get_tasmota_devices():
             while True:
                 try:

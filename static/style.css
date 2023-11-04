@@ -112,6 +112,18 @@ footer {
     background-color: gainsboro;
 }
 
+.mikrotik_tr {
+    font-size: x-small;
+    padding-bottom: 1em;
+    padding-top: 1em;
+    border-spacing:0 5px;
+}
+
+.mikrotik_interface_name {
+    text-align: right;
+    padding-right: 15px;
+}
+
 @media screen and (max-width: 1200px) {
     #multicharts ul li {
       width: 100%;
