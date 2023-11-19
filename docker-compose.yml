@@ -8,9 +8,31 @@ services:
             - 9001:9001
         volumes:
             - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-            - ./.passwords://mosquitto/passwd_file
+            - ./.passwords:/mosquitto/passwd_file
             - mosquitto-data:/mosquitto/data
             - mosquitto-logs:/mosquitto/log
+
+    influxdb:
+        image: influxdb:2.0
+        ports:
+            - 8086:8086
+        volumes:
+            - ./influxdb-config:/etc/influxdb2
+            - ./influxdb-data:/var/lib/influxdb2
+        env_file:
+            - ./config.env
+        depends_on:
+            - mqtt
+
+    mqtt_client:
+        image: jwansek/mqtt-client
+        build:
+            context: ./mqtt-client
+            dockerfile: Dockerfile
+        env_file:
+            - ./config.env
+        depends_on:
+            - influxdb
 
 volumes:
     mosquitto-data:

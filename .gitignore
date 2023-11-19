@@ -3,6 +3,9 @@ db.env
 *.pub
 *.pem
 .passwords
+config.env
+influxdb-config/
+influxdb-data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
