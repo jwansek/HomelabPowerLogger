@@ -2,14 +2,10 @@
 
 Logs Tasmota-flashed power usage monitors to InfluxDB and Grafana using MQTT.
 
-Looking for the Mikrotik POE usage monitor/exporter? That's been moved to [MikrotikPOEPowerExporter](https://github.com/jwansek/MikrotikPOEPowerExporter)
-
 ## Setup
 
-- `cp power.env.example power.env`
-- Edit `power.env` as appropriate
 - `touch .passwords`
-- `sudo docker-compose up -d --build`
+- `sudo docker-compose up -d`
 - `sudo docker exec -it poweredagay_mqtt_1 sh` Then in the container:
     - `chmod 0700 /mosquitto/passwd_file`
     - `chmod root:root /mosquitto/passwd_file`
