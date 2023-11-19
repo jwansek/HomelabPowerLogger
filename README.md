@@ -4,6 +4,8 @@ Logs Tasmota-flashed power usage monitors to InfluxDB and Grafana using MQTT.
 
 Looking for the Mikrotik POE usage monitor/exporter? That's been moved to [MikrotikPOEPowerExporter](https://github.com/jwansek/MikrotikPOEPowerExporter)
 
+![InfluxDB screenshot](https://pbs.twimg.com/media/F_U75tVXwAA5QfG?format=jpg&name=medium)
+
 ## Setup
 
 - `cp power.env.example power.env`
