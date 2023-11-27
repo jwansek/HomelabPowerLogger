@@ -22,11 +22,11 @@ class MQTTClient:
         self.mqttc.loop_forever()
 
     def _on_connect_cb(self, mqtt, userdata, flags, rc):
-        print("Connected to broker")
+        #print("Connected to broker")
         self.mqttc.subscribe("tele/+/SENSOR")
 
     def _on_message_cb(self, mqtt, userdata, msg):
-        print('Topic: {0} | Message: {1}'.format(msg.topic, msg.payload))
+        #print('Topic: {0} | Message: {1}'.format(msg.topic, msg.payload))
 
         if "Tasmota" in msg.topic:
             self.handle_tasmota(msg)
@@ -34,7 +34,7 @@ class MQTTClient:
     def handle_tasmota(self, msg):
         from_ = msg.topic.split("/")[1]
         msg_j = json.loads(msg.payload.decode())
-        #print(from_)
+        print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (from_, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
         fields = {k: v for k, v in msg_j["ENERGY"].items() if k not in {"TotalStartTime"}}
         points = [{"measurement": "tasmota_power", "tags": {"plug": from_}, "fields": fields}]
         write_api = self.influxc.write_api(write_options = SYNCHRONOUS)
