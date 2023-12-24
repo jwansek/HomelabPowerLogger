@@ -27,7 +27,7 @@ services:
         restart: unless-stopped
 
     mqtt_client:
-        image: jwansek/mqtt-client
+        image: reg.reaweb.uk/mqtt-client
         build:
             context: ./mqtt-client
             dockerfile: Dockerfile
@@ -36,6 +36,19 @@ services:
         depends_on:
             - influxdb
         restart: unless-stopped
+
+    snmp_client:
+        image: reg.reaweb.uk/snmp-client
+        build:
+            context: ./switch-snmp
+            dockerfile: Dockerfile
+        env_file:
+            - ./config.env
+        depends_on:
+            - influxdb
+        restart: unless-stopped
+        volumes:
+            - ./switch-snmp/port-names.conf:/app/port-names.conf
 
 volumes:
     mosquitto-data:

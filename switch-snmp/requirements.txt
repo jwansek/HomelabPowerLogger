@@ -1,0 +1,3 @@
+python-dotenv
+influxdb-client
+pandas
