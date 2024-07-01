@@ -50,6 +50,17 @@ services:
         volumes:
             - ./switch-snmp/port-names.conf:/app/port-names.conf
 
+    grafana:
+        image: grafana/grafana:8.5.27
+        ports:
+            - 3000:3000
+        depends_on:
+            - influxdb
+        restart: unless-stopped
+        volumes:
+            - grafana:/var/lib/grafana
+
 volumes:
     mosquitto-data:
     mosquitto-logs:
+    grafana:
