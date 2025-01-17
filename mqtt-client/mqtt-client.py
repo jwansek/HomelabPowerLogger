@@ -23,20 +23,39 @@ class MQTTClient:
 
     def _on_connect_cb(self, mqtt, userdata, flags, rc):
         #print("Connected to broker")
-        self.mqttc.subscribe("tele/+/SENSOR")
+        self.mqttc.subscribe("tele/+/+/SENSOR")
 
     def _on_message_cb(self, mqtt, userdata, msg):
         #print('Topic: {0} | Message: {1}'.format(msg.topic, msg.payload))
 
-        if "Tasmota" in msg.topic:
-            self.handle_tasmota(msg)
-
-    def handle_tasmota(self, msg):
-        from_ = msg.topic.split("/")[1]
+        # my MQTT naming scheme is tele/<sensor type>/<specific sensor location>/<whatever>
+        # e.g.
+        #    tele/TasmotaPlug/TasmotaNAS/SENSOR
+        #    tele/TasmotaZigbee/TasmotaZigbee/SENSOR (there is only one Tasmota Zigbee bridge)
+        type_ = msg.topic.split("/")[1]
+        location = msg.topic.split("/")[2]
         msg_j = json.loads(msg.payload.decode())
-        print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (from_, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
+
+        if type_ == "TasmotaPlug":
+            self.handle_plug(msg_j, location)
+        elif type_ == "TasmotaZigbee":
+            self.handle_zigbee(msg_j)
+
+    def handle_plug(self, msg_j, location):
+        print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (location, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
         fields = {k: v for k, v in msg_j["ENERGY"].items() if k not in {"TotalStartTime"}}
-        points = [{"measurement": "tasmota_power", "tags": {"plug": from_}, "fields": fields}]
+        self.append_influxdb(fields, "tasmota_power", {"plug": location})
+
+    def handle_zigbee(self, msg_j):
+        zigbee_id = list(msg_j["ZbReceived"].keys())[0]
+        fields = msg_j["ZbReceived"][zigbee_id]
+        friendlyname = fields.pop("Name")
+        del fields["Device"]
+        print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
+        self.append_influxdb(fields, "zigbee", {"friendlyname": friendlyname, "id": zigbee_id})
+
+    def append_influxdb(self, fields, measurement_name, tags):
+        points = [{"measurement": measurement_name, "tags": tags, "fields": fields}]
         write_api = self.influxc.write_api(write_options = SYNCHRONOUS)
         write_api.write(
             os.environ["DOCKER_INFLUXDB_INIT_BUCKET"],
