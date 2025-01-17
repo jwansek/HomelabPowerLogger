@@ -1,6 +1,7 @@
 # power.eda.gay
 
-Logs Tasmota-flashed power usage monitors, and Tp-Link Omada POE switches, to InfluxDB and Grafana using MQTT.
+Logs Tasmota-flashed power usage monitors, and TP-Link Omada POE switches, to InfluxDB and Grafana using MQTT and SNMP.
+Also logs Zigbee informtion with a Tasmota-flashed Zigbee bridge.
 
 Looking for the Mikrotik POE usage monitor/exporter? That's been moved to [MikrotikPOEPowerExporter](https://github.com/jwansek/MikrotikPOEPowerExporter)
 

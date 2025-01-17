@@ -12,5 +12,6 @@ RUN pip3 install -r requirements.txt
 RUN rm "privateMibs(20220831).zip"
 
 RUN echo "*/1 * * * * root python3 /app/snmp-omada.py > /proc/1/fd/1 2>/proc/1/fd/2" > /etc/crontab
+RUN echo "*/1 * * * * root sh -c 'sleep 30 && python3 /app/snmp-omada.py' > /proc/1/fd/1 2>/proc/1/fd/2" >> /etc/crontab
 ENTRYPOINT ["bash"]
 CMD ["entrypoint.sh"]
