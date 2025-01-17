@@ -54,6 +54,22 @@ class MQTTClient:
         print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
         self.append_influxdb(fields, "zigbee", {"friendlyname": friendlyname, "id": zigbee_id})
 
+        if zigbee_id == "0x7327" and friendlyname == "TVButton" and "Power" in fields.keys():
+            if fields["Power"] == 2:
+                print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
+                self.toggle_plug("TasmotaTV")
+
+        if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
+            if fields["Power"] == 2:
+                print("Harvey's button pressed, toggling TasmotaHarveyPC Plug")
+                self.toggle_plug("TasmotaHarveyPC")
+
+    def toggle_plug(self, friendlyname):
+        t = "cmnd/TasmotaPlug/%s/Power" % friendlyname
+        payload = "TOGGLE"
+        self.mqttc.publish(t, payload = payload)
+        print("Send payload '%s' to %s" % (payload, t))
+
     def append_influxdb(self, fields, measurement_name, tags):
         points = [{"measurement": measurement_name, "tags": tags, "fields": fields}]
         write_api = self.influxc.write_api(write_options = SYNCHRONOUS)

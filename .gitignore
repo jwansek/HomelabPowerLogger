@@ -6,6 +6,7 @@ db.env
 config.env
 influxdb-config/
 influxdb-data/
+node-red-data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
