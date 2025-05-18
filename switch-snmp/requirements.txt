@@ -1,3 +1,4 @@
 python-dotenv
 influxdb-client
 pandas
+fabric

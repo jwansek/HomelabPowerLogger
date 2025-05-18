@@ -48,7 +48,9 @@ services:
             - influxdb
         restart: unless-stopped
         volumes:
-            - ./switch-snmp/port-names.conf:/app/port-names.conf
+            - ./switch-snmp/omada-switches.conf:/app/omada-switches.conf
+            - ./switch-snmp/mikrotik-switches.conf:/app/mikrotik-switches.conf
+            - ./switch-snmp/mikrotik.pem:/app/mikrotik.pem
 
     grafana:
         image: grafana/grafana:8.5.27
