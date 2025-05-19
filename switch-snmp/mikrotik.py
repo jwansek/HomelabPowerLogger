@@ -78,7 +78,7 @@ class MikroTikSSHDevice:
     def get_poe_interfaces(self, interface_names):
         out = {}
         for four_interfaces in [interface_names[i:i + 4] for i in range(0, len(interface_names), 4)]:
-            out |= self._poll_four_interfaces(four_interfaces)
+            out = {**out, **self._poll_four_interfaces(four_interfaces)}
         return out
 
 def remove_measurement_type(type_str):
