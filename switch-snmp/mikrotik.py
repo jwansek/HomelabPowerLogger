@@ -1,13 +1,23 @@
 from dataclasses import dataclass
+from paramiko.ssh_exception import NoValidConnectionsError
 import configparser
 import threading
 import fabric
+import logging
 import time
 import os
 import re
 
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+
+logging.basicConfig( 
+    format = "%(levelname)s\t[%(asctime)s]\t%(message)s", 
+    level = logging.INFO,
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 
 INFLUXDB_MAPPINGS = {
     "poe-out-voltage": "tpPoeVoltage",
@@ -91,8 +101,25 @@ def get_points():
     points = []
     for mikrotik_switch in mikrotik_switches.sections():
         mikrotik_device = MikroTikSSHDevice(mikrotik_switch, os.path.join(os.path.dirname(__file__), "mikrotik.pem"))
-        points += fields_to_points(mikrotik_device.get_poe_interfaces(list(mikrotik_switches[mikrotik_switch].keys())), mikrotik_switch, mikrotik_switches)
+        try:
+            points += fields_to_points(mikrotik_device.get_poe_interfaces(list(mikrotik_switches[mikrotik_switch].keys())), mikrotik_switch, mikrotik_switches)
+        except NoValidConnectionsError as e:
+            logging.error("Could not connect to mikrotik switch @ %s" % mikrotik_switch)
     return points
+
+def print_points(points):
+    for measurement in points:
+        if set(INFLUXDB_MAPPINGS.values()) <= set(measurement["fields"].keys()):
+            if measurement["fields"]["tpPoePower"] > 0:
+                logging.info("Port %s (%s) of %s switch %s is currently using %.1fW (%imA / %.1fV)" % (
+                    str(measurement["tags"]["port"]),
+                    measurement["tags"]["port_name"],
+                    measurement["tags"]["type"],
+                    measurement["tags"]["switch_host"],
+                    measurement["fields"]["tpPoePower"],
+                    measurement["fields"]["tpPoeCurrent"],
+                    measurement["fields"]["tpPoeVoltage"],
+                ))
 
 def append(points):
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.env")
