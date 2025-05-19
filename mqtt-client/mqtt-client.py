@@ -1,6 +1,7 @@
 import paho.mqtt.client as paho
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+import time
 import json
 import os
 
@@ -58,6 +59,10 @@ class MQTTClient:
             if fields["Power"] == 2:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
                 self.toggle_plug("TasmotaTV")
+                time.sleep(8)
+                self.toggle_plug("TasmotaGeoffery")
+                time.sleep(0.5)
+                self.toggle_plug("TasmotaGeoffery")
 
         if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
             if fields["Power"] == 2:
@@ -85,8 +90,8 @@ if __name__ == "__main__":
     if os.path.exists(env_path):
         import dotenv
         dotenv.load_dotenv(dotenv_path = env_path)
-        INFLUXDB_HOST = "localhost"
-        MQTT_HOST = "localhost"
+        INFLUXDB_HOST = "dns.athome"
+        MQTT_HOST = "dns.athome"
     else:
         INFLUXDB_HOST = "influxdb"
         MQTT_HOST = "mqtt"
