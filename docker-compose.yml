@@ -35,6 +35,7 @@ services:
             - ./config.env
         depends_on:
             - influxdb
+            - prometheus
         restart: unless-stopped
 
     snmp_client:
@@ -58,9 +59,21 @@ services:
             - 3000:3000
         depends_on:
             - influxdb
+            - prometheus
         restart: unless-stopped
         volumes:
             - grafana:/var/lib/grafana
+
+    prometheus:
+        image: prom/prometheus
+        volumes:
+            - ./prometheus/:/etc/prometheus/
+        command:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --web.config.file=/etc/prometheus/web.yml
+        ports:
+            - 9090:9090
+
 
 volumes:
     mosquitto-data:
