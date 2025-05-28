@@ -28,6 +28,7 @@ def append(points):
                     port_name = measurement["tags"]["port_name"],
                     host = measurement["tags"]["switch_host"]
                 ).set(float(measurement["fields"][field]))
+                prometheus_client.push_to_gateway("%s:9091" % PUSHGATEWAY_HOST, job = "switchSNMP", registry = registry)
 
     write_api = influxc.write_api(write_options = SYNCHRONOUS)
     write_api.write(
@@ -52,11 +53,10 @@ if __name__ == "__main__":
     switch_power = prometheus_client.Gauge(
         "switch_power",
         "POE switch power usage metrics from Omada and Mikrotik switches, using Omada SNMP names",
-        labelnames = ["field", "type", "port", "port_name", "host"]
+        labelnames = ["field", "type", "port", "port_name", "host"],
+        registry = registry
     )
 
     points = snmpOmada.get_points() + mikrotik.get_points()
     mikrotik.print_points(points)
     append(points)
-
-    prometheus_client.push_to_gateway("%s:9091" % PUSHGATEWAY_HOST, job = "switchSNMP", registry = registry)
