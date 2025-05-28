@@ -47,6 +47,7 @@ services:
             - ./config.env
         depends_on:
             - influxdb
+            - pushgateway
         restart: unless-stopped
         volumes:
             - ./switch-snmp/omada-switches.conf:/app/omada-switches.conf
@@ -57,6 +58,8 @@ services:
         image: grafana/grafana:8.5.27
         ports:
             - 3000:3000
+        environment:
+            - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-sankey-panel
         depends_on:
             - influxdb
             - prometheus
@@ -73,6 +76,11 @@ services:
             - --web.config.file=/etc/prometheus/web.yml
         ports:
             - 9090:9090
+        restart: unless-stopped
+
+    pushgateway:
+        image: prom/pushgateway
+        restart: unless-stopped
 
 
 volumes:
