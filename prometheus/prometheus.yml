@@ -9,3 +9,7 @@ scrape_configs:
    static_configs:
     - targets:
        - pushgateway:9091
+ - job_name: mqtt
+   static_configs:
+    - targets:
+       - mqtt_client:8000
