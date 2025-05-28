@@ -2,3 +2,4 @@ python-dotenv
 influxdb-client
 pandas
 fabric
+prometheus-client

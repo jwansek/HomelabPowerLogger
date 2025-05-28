@@ -8,9 +8,6 @@ import time
 import os
 import re
 
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
-
 logging.basicConfig( 
     format = "%(levelname)s\t[%(asctime)s]\t%(message)s", 
     level = logging.INFO,
@@ -121,30 +118,6 @@ def print_points(points):
                     measurement["fields"]["tpPoeVoltage"],
                 ))
 
-def append(points):
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.env")
-    if os.path.exists(env_path):
-        import dotenv
-        dotenv.load_dotenv(dotenv_path = env_path)
-        INFLUXDB_HOST = "dns.athome"
-    else:
-        INFLUXDB_HOST = "influxdb"
-
-    influxc = InfluxDBClient(
-        url = "http://%s:8086" % INFLUXDB_HOST,
-        token = os.environ["DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"],
-        org = os.environ["DOCKER_INFLUXDB_INIT_ORG"] 
-    )
-    influxc.ping()
-
-    write_api = influxc.write_api(write_options = SYNCHRONOUS)
-    write_api.write(
-        os.environ["DOCKER_INFLUXDB_INIT_BUCKET"],
-        os.environ["DOCKER_INFLUXDB_INIT_ORG"],
-        points,
-        write_precision = WritePrecision.S
-    )
-
 if __name__ == "__main__":
     if not os.path.exists(os.path.join(os.path.dirname(__file__), "mikrotik-switches.conf")):
         raise FileNotFoundError("Couldn't find mikrotik config file")
@@ -154,5 +127,4 @@ if __name__ == "__main__":
     import json
     points = get_points()
     print(json.dumps(points, indent = 4))
-    append(points)
     

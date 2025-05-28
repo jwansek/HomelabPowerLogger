@@ -8,6 +8,7 @@ influxdb-config/
 influxdb-data/
 node-red-data/
 prometheus/web.yml
+prometheus/web.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

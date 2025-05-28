@@ -1,6 +1,7 @@
 import paho.mqtt.client as paho
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+import prometheus_client
 import threading
 import time
 import json
@@ -18,6 +19,32 @@ class MQTTClient:
             org = os.environ["DOCKER_INFLUXDB_INIT_ORG"] 
         )
         self.influxc.ping()
+        self.tasmota_power_prom = prometheus_client.Gauge(
+            "tasmota_power", 
+            "Power metrics as reported by Tasmota-flashed plugs", 
+            labelnames = ["plug", "field"]
+        )
+        self.humidity_prom = prometheus_client.Gauge(
+            "humidity",
+            "Humidity as reported by a zigbee device over MQTT",
+            labelnames = ["location"]
+        )
+        self.temperature_prom = prometheus_client.Gauge(
+            "temperature",
+            "Temperature as reported by a zigbee device over MQTT",
+            labelnames = ["location"]
+        )
+        self.doorsensor_prom = prometheus_client.Enum(
+            "door_sensor",
+            "Door sensor state change as reported by zigbee door sensor over MQTT",
+            states = ["opened", "closed"],
+            labelnames = ["location"]
+        )
+        self.door_opened_counter = prometheus_client.Counter(
+            "door_opened",
+            "Door sensor opened as reported by zigbee door sensor over MQTT",
+            labelnames = ["location"]
+        )
 
         self.mqttc = paho.Client(mqtt_client_name, clean_session = True)
         if loop_forever:
@@ -49,10 +76,14 @@ class MQTTClient:
         elif type_ == "TasmotaZigbee":
             self.handle_zigbee(msg_j)
 
+
     def handle_plug(self, msg_j, location):
         print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (location, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
         fields = {k: v for k, v in msg_j["ENERGY"].items() if k not in {"TotalStartTime"}}
         self.append_influxdb(fields, "tasmota_power", {"plug": location})
+
+        for k, v in fields.items():
+            self.tasmota_power_prom.labels(plug = location, field = k).set(v)
 
     def handle_zigbee(self, msg_j):
         def toggle_geoffery():
@@ -81,6 +112,17 @@ class MQTTClient:
                 print("Harvey's button pressed, toggling TasmotaHarveyPC Plug")
                 self.toggle_plug("TasmotaHarveyPC")
 
+        if "Humidity" in fields.keys():
+            self.humidity_prom.labels(location = friendlyname).set(fields["Humidity"])
+        elif "Temperature" in fields.keys():
+            self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"])
+        elif "ZoneStatus" in fields.keys() and "Contact" in fields.keys():
+            if fields["ZoneStatus"] == 1 and fields["Contact"] == 1:
+                self.doorsensor_prom.labels(location = friendlyname).state("opened")
+                self.door_opened_counter.labels(location = friendlyname).inc()
+            elif fields["ZoneStatus"] == 0 and fields["Contact"] == 0:
+                self.doorsensor_prom.labels(location = friendlyname).state("closed")
+
     def set_plug(self, friendlyname, payload):
         t = "cmnd/TasmotaPlug/%s/Power" % friendlyname
         self.mqttc.publish(t, payload = payload)
@@ -106,8 +148,11 @@ if __name__ == "__main__":
         dotenv.load_dotenv(dotenv_path = env_path)
         INFLUXDB_HOST = "dns.athome"
         MQTT_HOST = "dns.athome"
+        PROM_HOST = "dns.athome"
     else:
         INFLUXDB_HOST = "influxdb"
         MQTT_HOST = "mqtt"
+        PROM_HOST = "prometheus"
 
+    prometheus_client.start_http_server(8000)
     mqtt_client = MQTTClient()
