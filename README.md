@@ -1,4 +1,4 @@
-# power.eda.gay
+# SNMP and MQTT Power Logger & Visualizer
 
 Logs Tasmota-flashed power usage monitors, and TP-Link Omada/Mikrotik POE switches, to InfluxDB and Grafana using MQTT, SNMP and prometheus.
 Also logs Zigbee informtion with a Tasmota-flashed Zigbee bridge.
