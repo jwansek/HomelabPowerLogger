@@ -5,7 +5,7 @@ Also logs Zigbee informtion with a Tasmota-flashed Zigbee bridge.
 
 Looking for the Mikrotik POE usage monitor/exporter? That's in [`mikrotik.py`](/switch-snmp/mikrotik.py)
 
-![Grafana screenshot]([https://pbs.twimg.com/media/F_U75tVXwAA5QfG?format=jpg&name=medium](https://i.imgur.com/YcAmIf5.png))
+![Grafana screenshot](https://i.imgur.com/YcAmIf5.png)
 
 ## Setup
 
