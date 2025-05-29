@@ -27,3 +27,11 @@ Looking for the Mikrotik POE usage monitor/exporter? That's in [`mikrotik.py`](/
 You must enable SNMP in the Omada controller with the community string `tplink`:
 
 ![SNMP](https://i.imgur.com/bWUGPQO.png)
+
+Moreover mikrotik switches must be set up with an appropriate SSH key pair so they can be polled through SSH
+
+## MQTT setup
+
+We are using a [Tasmota-flashed zigbee coordinator](https://www.aliexpress.com/item/1005005254486268.html) to transmit zigbee messages to our MQTT castor, and [Tasmota-flashed plugs](https://www.aliexpress.com/item/1005008427641332.htm) for logging power from the wall over MQTT. Both must be configured with an appropriate friendlyname and told access the MQTT castor.
+
+![Zigbee coordinator](https://i.imgur.com/GSyKSgS.png) ![MQTT Configuration](https://i.imgur.com/96q7nmo.png)
