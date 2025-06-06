@@ -13,3 +13,8 @@ scrape_configs:
    static_configs:
     - targets:
        - mqtt_client:8000
+ - job_name: pfsense-node-exporter
+   static_configs:
+    - targets:
+       - 192.169.69.1:9100
+
