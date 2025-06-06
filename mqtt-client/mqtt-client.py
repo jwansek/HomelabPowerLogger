@@ -98,8 +98,6 @@ class MQTTClient:
         friendlyname = fields.pop("Name")
         del fields["Device"]
         print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
-        if "Read" not in fields.keys():
-            self.append_influxdb(fields, "zigbee", {"friendlyname": friendlyname, "id": zigbee_id})
 
         if zigbee_id == "0x7327" and friendlyname == "TVButton" and "Power" in fields.keys():
             if fields["Power"] == 2:
@@ -113,15 +111,20 @@ class MQTTClient:
                 self.toggle_plug("TasmotaHarveyPC")
 
         if "Humidity" in fields.keys():
+            fields["Humidity"] = float(fields["Humidity"])
             self.humidity_prom.labels(location = friendlyname).set(fields["Humidity"])
         elif "Temperature" in fields.keys():
-            self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"])
+            fields["Temperature"] = float(fields["Temperature"])
+            self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"]) 
         elif "ZoneStatus" in fields.keys() and "Contact" in fields.keys():
             if fields["ZoneStatus"] == 1 and fields["Contact"] == 1:
                 self.doorsensor_prom.labels(location = friendlyname).state("opened")
                 self.door_opened_counter.labels(location = friendlyname).inc()
             elif fields["ZoneStatus"] == 0 and fields["Contact"] == 0:
                 self.doorsensor_prom.labels(location = friendlyname).state("closed")
+
+        if "Read" not in fields.keys():
+            self.append_influxdb(fields, "zigbee", {"friendlyname": friendlyname, "id": zigbee_id})
 
     def set_plug(self, friendlyname, payload):
         t = "cmnd/TasmotaPlug/%s/Power" % friendlyname
