@@ -106,11 +106,11 @@ class MQTTClient:
             if fields["Power"] == 2:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
                 self.toggle_plug("TasmotaTV")
-                # threading.Thread(target = toggle_geoffery, args = ()).start()
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
-                time.sleep(8)
-                loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
+                threading.Thread(target = toggle_geoffery, args = ()).start()
+                #loop = asyncio.get_event_loop()
+                #loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
+                #time.sleep(8)
+                #loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
 
 
         if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
