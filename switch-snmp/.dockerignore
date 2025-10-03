@@ -1,1 +1,4 @@
 port-names.conf
+*.pem
+*.pub
+

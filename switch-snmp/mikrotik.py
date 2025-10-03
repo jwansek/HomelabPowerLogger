@@ -4,12 +4,13 @@ import configparser
 import threading
 import fabric
 import logging
+import socket
 import time
 import os
 import re
 
-logging.basicConfig( 
-    format = "%(levelname)s\t[%(asctime)s]\t%(message)s", 
+logging.basicConfig(
+    format = "%(levelname)s\t[%(asctime)s]\t%(message)s",
     level = logging.INFO,
     handlers=[
         logging.StreamHandler()
@@ -36,9 +37,10 @@ class MikroTikSSHDevice:
         return fabric.Connection(
             user = self.user,
             host = self.host,
-            connect_kwargs = {"key_filename": self.ssh_key_path}
+            connect_kwargs = {"key_filename": self.ssh_key_path},
+            connect_timeout = 5
         )
-    
+
     def _poll_four_interfaces(self, four_interfaces):
         # only poll four interfaces at the same time since we can only get a certain amount of information through SSH at the same time
         self.is_being_polled.set()
@@ -71,7 +73,7 @@ class MikroTikSSHDevice:
                         # print("Adding %s to off interfaces" % interface_name)
                         off_interfaces.add(interface_name)
         return out
-    
+
     def get_poe_interfaces(self, interface_names):
         out = {}
         for four_interfaces in [interface_names[i:i + 4] for i in range(0, len(interface_names), 4)]:
@@ -79,6 +81,9 @@ class MikroTikSSHDevice:
         return out
 
 def remove_measurement_type(type_str):
+    if str(type_str).endswith(".0"):
+        return float(type_str)
+
     type_str = "".join([s for s in type_str if s.isdigit() or s == "."])
     if "." in type_str:
         return float(type_str)
@@ -87,8 +92,8 @@ def remove_measurement_type(type_str):
 
 def fields_to_points(fields, switch_host, config):
     return [{
-        "measurement": "switch_status", 
-        "tags": {"port": port, "port_name": config.get(switch_host, port), "switch_host": switch_host, "type": "MikroTik"}, 
+        "measurement": "switch_status",
+        "tags": {"port": port, "port_name": config.get(switch_host, port), "switch_host": switch_host, "type": "MikroTik"},
         "fields": {INFLUXDB_MAPPINGS[k]: remove_measurement_type(v) for k, v in values.items() if k in INFLUXDB_MAPPINGS}
     } for port, values in fields.items()]
 
@@ -100,7 +105,7 @@ def get_points():
         mikrotik_device = MikroTikSSHDevice(mikrotik_switch, os.path.join(os.path.dirname(__file__), "mikrotik.pem"))
         try:
             points += fields_to_points(mikrotik_device.get_poe_interfaces(list(mikrotik_switches[mikrotik_switch].keys())), mikrotik_switch, mikrotik_switches)
-        except NoValidConnectionsError as e:
+        except (NoValidConnectionsError, TimeoutError, socket.timeout) as e:
             logging.error("Could not connect to mikrotik switch @ %s" % mikrotik_switch)
     return points
 
@@ -123,8 +128,7 @@ if __name__ == "__main__":
         raise FileNotFoundError("Couldn't find mikrotik config file")
     if not os.path.exists(os.path.join(os.path.dirname(__file__), "mikrotik.pem")):
         raise FileNotFoundError("Couldn't find mikrotik public key file")
-    
+
     import json
     points = get_points()
     print(json.dumps(points, indent = 4))
-    
