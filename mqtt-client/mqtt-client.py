@@ -90,10 +90,10 @@ class MQTTClient:
     def handle_zigbee(self, msg_j):
         def toggle_firestick():
             print("Starting thread...")
-            tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "TOGGLE")
-            #print("Waiting...")
-            #time.sleep(8)
-            #tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
+            tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
+            print("Waiting...")
+            time.sleep(8)
+            tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
             print("Toggled firestick.")
 
         zigbee_id = list(msg_j["ZbReceived"].keys())[0]
