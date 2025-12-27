@@ -3,6 +3,7 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import prometheus_client
 import threading
+import requests
 import asyncio
 import time
 import json
@@ -48,6 +49,8 @@ class MQTTClient:
             labelnames = ["location"]
         )
 
+        # print(self.send_raw_tasmota_http("192.168.5.6", os.environ["MQTT_PASSWD"], "Power"))
+
         self.mqttc = paho.Client(mqtt_client_name, clean_session = True)
         if loop_forever:
             self.mqttc.on_connect = self._on_connect_cb
@@ -78,7 +81,6 @@ class MQTTClient:
         elif type_ == "TasmotaZigbee":
             self.handle_zigbee(msg_j)
 
-
     def handle_plug(self, msg_j, location):
         print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (location, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
         fields = {k: v for k, v in msg_j["ENERGY"].items() if k not in {"TotalStartTime"}}
@@ -88,13 +90,23 @@ class MQTTClient:
             self.tasmota_power_prom.labels(plug = location, field = k).set(v)
 
     def handle_zigbee(self, msg_j):
-        def toggle_firestick():
+        def toggle_firestick(status_before):
             print("Starting thread...")
-            tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
-            print("Waiting...")
-            time.sleep(8)
-            tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
-            print("Toggled firestick.")
+
+            if status_before == "OFF":
+                print("TV was formerly off, so its being turned on, so we're going to turn the firestick on.")
+                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
+                print("Waiting...")
+                time.sleep(8)
+                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
+                print("Turned firestick on.")
+            else:
+                print("TV was formerly on, so its being turned off, so we're going to turn the firestick off.")
+                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
+                print("Waiting...")
+                time.sleep(8)
+                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
+                print("Turned firestick off.")
 
         zigbee_id = list(msg_j["ZbReceived"].keys())[0]
         fields = msg_j["ZbReceived"][zigbee_id]
@@ -105,13 +117,9 @@ class MQTTClient:
         if zigbee_id == "0x7327" and friendlyname == "TVButton" and "Power" in fields.keys():
             if fields["Power"] == 2:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
+                status_before = self.get_http_power_status("192.168.5.6", os.environ["MQTT_PASSWD"])
                 self.toggle_plug("TasmotaTV")
-                threading.Thread(target = toggle_firestick, args = ()).start()
-                #loop = asyncio.get_event_loop()
-                #loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
-                #time.sleep(8)
-                #loop.run_until_complete(tasmotaHTTPClient.main(host = "geoffery.plug", username = "admin", password = os.environ["MQTT_PASSWD"], toggle = True))
-
+                threading.Thread(target = toggle_firestick, args = (status_before, )).start()
 
         if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
             if fields["Power"] == 2:
@@ -141,6 +149,17 @@ class MQTTClient:
 
     def toggle_plug(self, friendlyname):
         self.set_plug(friendlyname, "TOGGLE")
+
+    def send_raw_tasmota_http(self, host, password, command):
+        req = requests.get("http://%s/cm" % host, params = {
+            "cmnd": str(command),
+            "user": "admin",
+            "password": password
+        })
+        return req.json()
+
+    def get_http_power_status(self, host, password):
+        return self.send_raw_tasmota_http(host, password, "Power")["POWER"]
 
     def append_influxdb(self, fields, measurement_name, tags):
         points = [{"measurement": measurement_name, "tags": tags, "fields": fields}]
