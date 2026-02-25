@@ -31,6 +31,8 @@ services:
         build:
             context: ./mqtt-client
             dockerfile: Dockerfile
+        volumes:
+            - ./mqtt-client/omada.cfg:/app/omada.cfg
         env_file:
             - ./config.env
         depends_on:

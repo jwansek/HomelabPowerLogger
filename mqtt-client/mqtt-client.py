@@ -14,6 +14,9 @@ sys.path.insert(1, os.path.join(os.path.dirname(__file__), "TasmotaCLI"))
 import tasmotaMQTTClient
 import tasmotaHTTPClient
 
+sys.path.insert(2, os.path.join(os.path.dirname(__file__), "omada-api"))
+from omada import Omada
+
 class MQTTClient:
     def __init__(self, mqtt_client_name = "reg.reaweb.uk/mqtt-client", loop_forever = True):
         self.influxc = InfluxDBClient(
@@ -95,17 +98,18 @@ class MQTTClient:
 
             if status_before == "OFF":
                 print("TV was formerly off, so its being turned on, so we're going to turn the firestick on.")
-                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
+
+                set_omada_poe("Firestick", 0)
                 print("Waiting...")
                 time.sleep(8)
-                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
+                set_omada_poe("Firestick", 1)
                 print("Turned firestick on.")
             else:
                 print("TV was formerly on, so its being turned off, so we're going to turn the firestick off.")
-                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "ON")
+                set_omada_poe("Firestick", 1)
                 print("Waiting...")
                 time.sleep(8)
-                tasmotaMQTTClient.MQTTClient(MQTT_HOST, "TasmotaFirestick", os.environ["MQTT_USER"], os.environ["MQTT_PASSWD"], "OFF")
+                set_omada_poe("Firestick", 0)
                 print("Turned firestick off.")
 
         zigbee_id = list(msg_j["ZbReceived"].keys())[0]
@@ -114,7 +118,7 @@ class MQTTClient:
         del fields["Device"]
         print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
 
-        if zigbee_id == "0x7327" and friendlyname == "TVButton" and "Power" in fields.keys():
+        if zigbee_id == "0x0A05" and friendlyname == "TVButton2" and "Power" in fields.keys():
             if fields["Power"] == 2:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
                 status_before = self.get_http_power_status("192.168.5.6", os.environ["MQTT_PASSWD"])
@@ -170,6 +174,20 @@ class MQTTClient:
             points,
             write_precision = WritePrecision.S
         )
+
+def set_omada_poe(profile, status):
+    o = Omada(os.path.join(os.path.dirname(__file__), "omada.cfg"))
+    o.login()
+
+    profileId = o.getProfileId(profile)
+    settings = o.getProfileSettings(profileId)
+    settings['poe'] = status
+    o.setProfileSettings(profileId, settings)
+
+    settings = o.getProfileSettings(profileId)
+
+    print("Sent POE setting '%d' to profile '%s'" % (settings["poe"], settings["name"]))
+    o.logout()
 
 if __name__ == "__main__":
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.env")

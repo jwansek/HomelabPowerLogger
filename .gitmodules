@@ -1,3 +1,6 @@
 [submodule "mqtt-client/TasmotaCLI"]
 	path = mqtt-client/TasmotaCLI
 	url = git@github.com:jwansek/TasmotaCLI.git
+[submodule "mqtt-client/omada-api"]
+	path = mqtt-client/omada-api
+	url = git@github.com:thannerfabian/omada-api
