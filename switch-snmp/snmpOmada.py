@@ -44,7 +44,7 @@ def get_alternate_name(port, host):
     try:
         return port_names[port]
     except KeyError:
-        return port
+        return str(port)
 
 def snmp_walk(host):
     proc = subprocess.Popen(

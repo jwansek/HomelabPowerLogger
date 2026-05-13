@@ -10,6 +10,7 @@ node-red-data/
 prometheus/web.yml
 prometheus/web.yml
 mqtt-client/omada.cfg
+venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

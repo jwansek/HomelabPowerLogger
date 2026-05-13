@@ -98,17 +98,16 @@ class MQTTClient:
 
             if status_before == "OFF":
                 print("TV was formerly off, so its being turned on, so we're going to turn the firestick on.")
-
                 set_omada_poe("Firestick", 0)
                 print("Waiting...")
-                time.sleep(8)
+                time.sleep(6)
                 set_omada_poe("Firestick", 1)
                 print("Turned firestick on.")
             else:
                 print("TV was formerly on, so its being turned off, so we're going to turn the firestick off.")
                 set_omada_poe("Firestick", 1)
                 print("Waiting...")
-                time.sleep(8)
+                time.sleep(6)
                 set_omada_poe("Firestick", 0)
                 print("Turned firestick off.")
 
@@ -124,6 +123,7 @@ class MQTTClient:
                 status_before = self.get_http_power_status("192.168.5.6", os.environ["MQTT_PASSWD"])
                 self.toggle_plug("TasmotaTV")
                 threading.Thread(target = toggle_firestick, args = (status_before, )).start()
+                # toggle_firestick(status_before)
 
         if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
             if fields["Power"] == 2:
