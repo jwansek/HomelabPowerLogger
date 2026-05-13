@@ -7,6 +7,8 @@ Looking for the Mikrotik POE usage monitor/exporter? That's in [`mikrotik.py`](/
 
 ![Grafana screenshot](/docs/power2.png)
 
+![Grafana screenshot 2](/docs/zigbee.png)
+
 ## Setup
 
 - `cp power.env.example power.env`
