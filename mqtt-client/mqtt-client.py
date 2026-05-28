@@ -3,6 +3,7 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import prometheus_client
 import threading
+import datetime
 import requests
 import asyncio
 import time
@@ -137,6 +138,9 @@ class MQTTClient:
             fields["Temperature"] = float(fields["Temperature"])
             self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"]) 
         elif "ZoneStatus" in fields.keys() and "Contact" in fields.keys():
+            with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
+                f.write("%s,Contact=%d,%d\n" % (datetime.datetime.now().astimezone().isoformat(), fields["Contact"], fields["Contact"]))
+
             if fields["ZoneStatus"] == 1 and fields["Contact"] == 1:
                 self.doorsensor_prom.labels(location = friendlyname).state("opened")
                 self.door_opened_counter.labels(location = friendlyname).inc()

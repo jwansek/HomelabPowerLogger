@@ -33,6 +33,7 @@ services:
             dockerfile: Dockerfile
         volumes:
             - ./mqtt-client/omada.cfg:/app/omada.cfg
+            - ./door_log.csv:/app/door_log.csv
         env_file:
             - ./config.env
         depends_on:
