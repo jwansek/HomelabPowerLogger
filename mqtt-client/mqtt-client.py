@@ -118,6 +118,11 @@ class MQTTClient:
         del fields["Device"]
         print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
 
+        if friendlyname == "DoorSensor":
+            with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
+                f.write("%s,%s,%s" % (datetime.datetime.now().astimezone().isoformat(), friendlyname, ",".join(sorted(["%s=%s" % (k, v) for k, v in fields.items()]))))
+
+
         if zigbee_id == "0x0A05" and friendlyname == "TVButton2" and "Power" in fields.keys():
             if fields["Power"] == 2:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
@@ -138,9 +143,6 @@ class MQTTClient:
             fields["Temperature"] = float(fields["Temperature"])
             self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"]) 
         elif "ZoneStatus" in fields.keys() and "Contact" in fields.keys():
-            with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
-                f.write("%s,Contact=%d,%d\n" % (datetime.datetime.now().astimezone().isoformat(), fields["Contact"], fields["Contact"]))
-
             if fields["ZoneStatus"] == 1 and fields["Contact"] == 1:
                 self.doorsensor_prom.labels(location = friendlyname).state("opened")
                 self.door_opened_counter.labels(location = friendlyname).inc()
