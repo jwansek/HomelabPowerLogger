@@ -120,8 +120,7 @@ class MQTTClient:
 
         if friendlyname == "DoorSensor":
             with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
-                f.write("%s,%s,%s" % (datetime.datetime.now().astimezone().isoformat(), friendlyname, ",".join(sorted(["%s=%s" % (k, v) for k, v in fields.items()]))))
-
+                f.write("%s,%s,%s\n" % (datetime.datetime.now().astimezone().isoformat(), friendlyname, ",".join(sorted(["%s=%s" % (k, v) for k, v in fields.items()]))))
 
         if zigbee_id == "0x0A05" and friendlyname == "TVButton2" and "Power" in fields.keys():
             if fields["Power"] == 2:
