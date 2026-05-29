@@ -53,6 +53,13 @@ class MQTTClient:
             labelnames = ["location"]
         )
 
+        self.zigbee_plugs = {"MikroTikZigbeePlug"}
+        self.zigbee_to_tasmota_transformations = {
+            "RMSVoltage": "Voltage",
+            "ActivePower": "Power",
+            "RMSCurrent": "Current"
+        }
+
         # print(self.send_raw_tasmota_http("192.168.5.6", os.environ["MQTT_PASSWD"], "Power"))
 
         self.mqttc = paho.Client(mqtt_client_name, clean_session = True)
@@ -84,6 +91,14 @@ class MQTTClient:
             self.handle_plug(msg_j, location)
         elif type_ == "TasmotaZigbee":
             self.handle_zigbee(msg_j)
+
+    def handle_zigbee_plug(self, friendlyname, fields):
+        fields2 = {}
+        for k, v in fields.items():
+            if k in self.zigbee_to_tasmota_transformations.keys():
+                fields2[self.zigbee_to_tasmota_transformations[k]] = v
+
+        self.append_influxdb(fields2, "tasmota_power", {"plug": friendlyname})
 
     def handle_plug(self, msg_j, location):
         print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (location, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
@@ -117,6 +132,9 @@ class MQTTClient:
         friendlyname = fields.pop("Name")
         del fields["Device"]
         print("Zigbee device '%s' reported: %s" % (friendlyname, str(fields)))
+
+        if friendlyname in self.zigbee_plugs:
+            self.handle_zigbee_plug(friendlyname, fields)
 
         if friendlyname == "DoorSensor":
             with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
