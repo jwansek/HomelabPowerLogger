@@ -3,3 +3,5 @@ influxdb-client
 pandas
 fabric
 prometheus-client
+paho-mqtt==1.6.1
+numpyencoder==0.3.2

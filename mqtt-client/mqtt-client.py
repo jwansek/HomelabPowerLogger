@@ -55,9 +55,9 @@ class MQTTClient:
 
         self.zigbee_plugs = {"MikroTikZigbeePlug"}
         self.zigbee_to_tasmota_transformations = {
-            "RMSVoltage": "Voltage",
-            "ActivePower": "Power",
-            "RMSCurrent": "Current"
+            "RMSVoltage": ("Voltage", int),
+            "ActivePower": ("Power", int),
+            "RMSCurrent": ("Current", float)
         }
 
         # print(self.send_raw_tasmota_http("192.168.5.6", os.environ["MQTT_PASSWD"], "Power"))
@@ -96,9 +96,13 @@ class MQTTClient:
         fields2 = {}
         for k, v in fields.items():
             if k in self.zigbee_to_tasmota_transformations.keys():
-                fields2[self.zigbee_to_tasmota_transformations[k]] = v
+                fields2[self.zigbee_to_tasmota_transformations[k][0]] = self.zigbee_to_tasmota_transformations[k][1](v)
 
+        print("Logged the following information for the zigbee plug '%s' as a tasmota plug: %s" % (friendlyname, str(fields2)))
         self.append_influxdb(fields2, "tasmota_power", {"plug": friendlyname})
+        
+        for k, v in fields2.items():
+            self.tasmota_power_prom.labels(plug = friendlyname, field = k).set(v)
 
     def handle_plug(self, msg_j, location):
         print("'%s' is using %.1fw @ %s. %.1fkWh so far today, %.1fkWh yesterday" % (location, msg_j["ENERGY"]["Power"], msg_j["Time"],  msg_j["ENERGY"]["Today"], msg_j["ENERGY"]["Yesterday"]))
@@ -160,10 +164,10 @@ class MQTTClient:
             fields["Temperature"] = float(fields["Temperature"])
             self.temperature_prom.labels(location = friendlyname).set(fields["Temperature"]) 
         elif "ZoneStatus" in fields.keys() and "Contact" in fields.keys():
-            if fields["ZoneStatus"] == 1 and fields["Contact"] == 1:
+            if fields["ZoneStatusChange"] == 1 and fields["ZoneStatusChangeZone"] == 1:
                 self.doorsensor_prom.labels(location = friendlyname).state("opened")
                 self.door_opened_counter.labels(location = friendlyname).inc()
-            elif fields["ZoneStatus"] == 0 and fields["Contact"] == 0:
+            elif fields["ZoneStatusChange"] == 0 and fields["ZoneStatusChangeZone"] == 1:
                 self.doorsensor_prom.labels(location = friendlyname).state("closed")
 
         if "Read" not in fields.keys():

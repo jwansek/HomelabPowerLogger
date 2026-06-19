@@ -1,6 +1,9 @@
+import paho.mqtt.client as paho
+from numpyencoder import NumpyEncoder
 import prometheus_client
 import snmpOmada
 import mikrotik
+import json
 import os
 
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -15,6 +18,11 @@ def append(points):
     influxc.ping()
 
     for measurement in points:
+        mqttc.publish(
+            "tele/SwitchSNMP/%s/%s/SENSOR" % (measurement["tags"]["switch_host"], str(measurement["tags"]["port"])), 
+            json.dumps({**measurement["tags"],  **measurement["fields"]}, cls = NumpyEncoder), 
+            qos = 1
+        )
         for field in measurement["fields"].keys():
             try:
                 float(measurement["fields"][field])
@@ -44,10 +52,16 @@ if __name__ == "__main__":
         import dotenv
         dotenv.load_dotenv(dotenv_path = env_path)
         INFLUXDB_HOST = "dns.athome"
+        MQTT_HOST = "dns.athome"
         PUSHGATEWAY_HOST = "dns.athome"
     else:
+        MQTT_HOST = "mqtt"
         INFLUXDB_HOST = "influxdb"
         PUSHGATEWAY_HOST = "pushgateway"
+
+    mqttc = paho.Client("reg.reaweb.uk/switch-snmp", clean_session = True)
+    mqttc.username_pw_set(os.environ["MQTT_USER"], password = os.environ["MQTT_PASSWD"])
+    mqttc.connect(MQTT_HOST, 1883, 60)
 
     registry = prometheus_client.CollectorRegistry()
     switch_power = prometheus_client.Gauge(
@@ -60,3 +74,6 @@ if __name__ == "__main__":
     points = snmpOmada.get_points() + mikrotik.get_points()
     mikrotik.print_points(points)
     append(points)
+    
+    mqttc.disconnect()
+
