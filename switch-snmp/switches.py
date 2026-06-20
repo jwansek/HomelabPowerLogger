@@ -4,6 +4,7 @@ import prometheus_client
 import snmpOmada
 import mikrotik
 import json
+import time
 import os
 
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -18,10 +19,10 @@ def append(points):
     influxc.ping()
 
     for measurement in points:
+        # print(json.dumps({**measurement["tags"],  **measurement["fields"]}, indent = 4, cls = NumpyEncoder))
         mqttc.publish(
             "tele/SwitchSNMP/%s/%s/SENSOR" % (measurement["tags"]["switch_host"], str(measurement["tags"]["port"])), 
-            json.dumps({**measurement["tags"],  **measurement["fields"]}, cls = NumpyEncoder), 
-            qos = 1
+            json.dumps({**measurement["tags"],  **measurement["fields"]}, cls = NumpyEncoder)
         )
         for field in measurement["fields"].keys():
             try:

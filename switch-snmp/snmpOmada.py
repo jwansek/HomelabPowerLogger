@@ -70,6 +70,8 @@ def readings_to_points(readings, switch_host):
     for p, group_df in df.groupby(["port", "port_name"]):
         port, port_name = p
         fields = dict(zip(group_df['endpoint'], group_df['reading']))
+        if 'tpPoeClass' in fields.keys():
+            fields['tpPoeClass'] = str(fields['tpPoeClass'])
 
         points.append({
             "measurement": "switch_status", 
