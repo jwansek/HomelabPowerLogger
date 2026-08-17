@@ -2,6 +2,7 @@ import paho.mqtt.client as paho
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import prometheus_client
+import urllib.parse
 import threading
 import datetime
 import requests
@@ -58,6 +59,9 @@ class MQTTClient:
             "RMSVoltage": ("Voltage", int),
             "ActivePower": ("Power", int),
             "RMSCurrent": ("Current", float)
+        }
+        self.sonoff_scene_buttons = {
+            "BedroomLightsButtons": "192.168.5.17"
         }
 
         # print(self.send_raw_tasmota_http("192.168.5.6", os.environ["MQTT_PASSWD"], "Power"))
@@ -140,6 +144,9 @@ class MQTTClient:
         if friendlyname in self.zigbee_plugs:
             self.handle_zigbee_plug(friendlyname, fields)
 
+        if friendlyname in self.sonoff_scene_buttons.keys() and "FC12/0000" in fields.keys():
+            self.handle_sonoff_scene_button(friendlyname = friendlyname, timespressed = fields["FC12/0000"], button = fields["Endpoint"])
+
         if friendlyname == "DoorSensor":
             with open(os.path.join(os.path.dirname(__file__), "door_log.csv"), "a") as f:
                 f.write("%s,%s,%s\n" % (datetime.datetime.now().astimezone().isoformat(), friendlyname, ",".join(sorted(["%s=%s" % (k, v) for k, v in fields.items()]))))
@@ -172,6 +179,25 @@ class MQTTClient:
 
         if "Read" not in fields.keys():
             self.append_influxdb(fields, "zigbee", {"friendlyname": friendlyname, "id": zigbee_id})
+
+    def handle_sonoff_scene_button(self, friendlyname, timespressed, button):
+        url_base = "http://%s/cm?cmnd=" % self.sonoff_scene_buttons[friendlyname]
+
+        if timespressed == 1:
+            if button == 1:
+                req = requests.get(url_base + urllib.parse.quote_plus("Color2 -"))
+            elif button == 2:
+                req = requests.get(url_base + urllib.parse.quote_plus("Color2 +"))
+            elif button == 3:
+                req = requests.get(url_base + urllib.parse.quote_plus("Dimmer2 -"))
+            elif button == 4:
+                req = requests.get(url_base + urllib.parse.quote_plus("Dimmer2 +"))
+
+            response = req.json()
+            print("%s responded with %s" % (self.sonoff_scene_buttons[friendlyname], json.dumps(response)))
+            if "Dimmer" in response.keys():
+                if response["Dimmer"] == 1:
+                    req = requests.get(url_base + urllib.parse.quote_plus("Power OFF"))
 
     def set_plug(self, friendlyname, payload):
         t = "cmnd/TasmotaPlug/%s/Power" % friendlyname
