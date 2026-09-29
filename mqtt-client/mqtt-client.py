@@ -54,7 +54,7 @@ class MQTTClient:
             labelnames = ["location"]
         )
 
-        self.zigbee_plugs = {"MikroTikZigbeePlug"}
+        self.zigbee_plugs = os.environ["ZIGBEE_PLUGS"].split(",")
         self.zigbee_to_tasmota_transformations = {
             "RMSVoltage": ("Voltage", int),
             "ActivePower": ("Power", int),
