@@ -156,7 +156,9 @@ class MQTTClient:
                 print("TV Zigbee button pressed, toggling TasmotaTV Tasmota Plug")
                 status_before = self.get_http_power_status("192.168.5.6", os.environ["MQTT_PASSWD"])
                 self.toggle_plug("TasmotaTV")
-                threading.Thread(target = toggle_firestick, args = (status_before, )).start()
+                t = threading.Thread(target = toggle_firestick, args = (status_before, ))
+                t.start()
+                time.sleep(1)
                 # toggle_firestick(status_before)
 
         if zigbee_id == "0x74B3" and friendlyname == "HarveyButton" and "Power" in fields.keys():
